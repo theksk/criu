@@ -177,17 +177,24 @@ unsigned int dump_pages_args_size(struct vm_area_list *vmas)
 
 static inline bool should_dump_page(VmaEntry *vmae, u64 pme)
 {
-	if (vma_entry_is(vmae, VMA_AREA_VDSO))
+	if (vma_entry_is(vmae, VMA_AREA_VDSO)) {
+		pr_debug("(y) VDSO\n");
 		return true;
+	}
 	/*
 	 * Optimisation for private mapping pages, that haven't
 	 * yet being COW-ed
 	 */
-	if (vma_entry_is(vmae, VMA_FILE_PRIVATE) && (pme & PME_FILE))
+	if (vma_entry_is(vmae, VMA_FILE_PRIVATE) && (pme & PME_FILE)) {
+		pr_debug("(n) FILE\n");
 		return false;
-	if (pme & (PME_PRESENT | PME_SWAP))
+	}
+	if (pme & (PME_PRESENT | PME_SWAP)) {
+		pr_debug("(y) PRESENT or SWAP\n");
 		return true;
+	}
 
+	pr_debug("(n)\n");
 	return false;
 }
 
@@ -258,10 +265,11 @@ static int generate_iovs(struct vma_area *vma, int pagemap, struct page_pipe *pp
 		unsigned long vaddr;
 		int ret;
 
+		vaddr = vma->vma.start + pfn * PAGE_SIZE;
+		pr_debug("Check %lx to dump: ", vaddr);
 		if (!should_dump_page(&vma->vma, map[pfn]))
 			continue;
 
-		vaddr = vma->vma.start + pfn * PAGE_SIZE;
 		if (snap && page_in_parent(vaddr, map[pfn], snap)) {
 			ret = page_pipe_add_hole(pp, vaddr);
 			pages[0]++;
