@@ -62,6 +62,7 @@ static int send_criu_msg(int socket_fd, CriuResp *msg)
 		return -1;
 	}
 
+	pr_debug("Writing responce\n");
 	if (write(socket_fd, buf, len)  == -1) {
 		pr_perror("Can't send response");
 		return -1;
@@ -272,6 +273,7 @@ static int cr_service_work(int sk)
 		goto err;
 	}
 
+	pr_debug("Received message %d\n", msg->type);
 	switch (msg->type) {
 	case CRIU_REQ_TYPE__DUMP:
 		return dump_using_req(sk, msg->opts);
